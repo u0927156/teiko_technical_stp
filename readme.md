@@ -38,6 +38,7 @@ The idea behind this design is to follow table normalization rules to ensure as 
 
 Some additional improvements may include decoupling the cell counts from the sample. This would involve adding a single table the first could be cell_counts and would contain a foreign key referencing the sample its associated with, the cell_name column, and the count. This would allow greater flexibility if some samples include or exclude certain cell types. If felt the complexity this added to the analytics wasn't worth it for this example project, but there are situations where I'd advocate for this design to ensure future flexibility. After all, there's no thing more permanent than a temporary solution. 
 
+![Schema](image.png)
 ## Code Structure
 
 I've organized my code into two internal packages. The first is the `db_manager` package. This contains the code for creating the database and inserting and deleting data. The other package, `teiko_technical`, is where I've included the code that does the actual analysis requested by Bob Loblaw. 
