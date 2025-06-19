@@ -91,7 +91,7 @@ def get_box_plot_and_df(
 
     fig = make_comparison_figure(comparison_df)
     fig.update_layout(
-        title="Relative Population of Responders vs Non-Responders by Cell Type"
+        title="Relative Population of Responders vs Non-Responders by Cell Type for PBMC Miraclib Samples"
     )
 
     return fig, comparison_df
@@ -120,7 +120,7 @@ def get_subset_box_plot_and_additional_info_dfs(
 
     fig = make_comparison_figure(samples_df)
     fig.update_layout(
-        title=f"Relative Population of Responders vs Non-Responders by Cell Type at t={t}"
+        title=f"Relative Population of Responders vs Non-Responders by Cell Type for PBMC Miraclib Samples at t={t}"
     )
 
     samples_from_each_project_df = samples_df.groupby("project", as_index=False)[

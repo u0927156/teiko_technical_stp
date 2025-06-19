@@ -38,7 +38,8 @@ st.markdown(
     """
             ## Responder vs Non-repsonders
             The following chart shows the differences in cell population relative frequences of 
-            those receiving miraclib by response status. Statistical significance was determined by using 
+            those receiving miraclib by response status for PBMC samples only. Comparisons that are significantly significant 
+            (p<0.05) are labeled with their p-value. Statistical significance was determined by using 
             a [KS-test](https://en.wikipedia.org/wiki/Kolmogorov%E2%80%93Smirnov_test). P-values are 
             [Bonferroni corrected](https://en.wikipedia.org/wiki/Bonferroni_correction). 
             """

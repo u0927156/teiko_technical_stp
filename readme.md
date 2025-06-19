@@ -17,7 +17,13 @@ database. If a database is already set up, the program will ask if you want to d
 If you want to add additional csv files of the same format to the database, you can run `poetry run python create_db.py your_file_here.csv`. This will add additional information to the existing database.
 
 #### Deleting data
-There are deletion functions in `db_deletion.py`. These do not have a user interface because users should not be given free reign to delete data from the database. Come to talk to me and we'll work through it before you do something you can't undo. 
+You can use the following command line function to delete samples from the database:
+```
+poetry run python delete_samples.py sample1 sample2 
+```
+
+There are other deletion functions in `db_deletion.py`. These do not have a user interface because users should not be given free reign to delete subject and project information from the database. 
+
 
 ### Streamlit App
 To run the program and visualize the results, use the command `poetry run python -m streamlit app.py`. This will create a local version of the web app this program makes that includes the data overview and statistical analysis. 
