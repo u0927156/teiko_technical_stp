@@ -13,7 +13,11 @@ Once poetry is installed, you can run `poetry install` to build an environment.
 Once your enviroment is setup, you can run `poetry run python create_db.py` to set up a local sqlite 
 database. If a database is already set up, the program will ask if you want to delete the existing database completely or append to it. 
 
+#### Adding additional data for further analysis
 If you want to add additional csv files of the same format to the database, you can run `poetry run python create_db.py your_file_here.csv`. This will add additional information to the existing database.
+
+#### Deleting data
+There are deletion functions in `db_deletion.py`. These do not have a user interface because users should not be given free reign to delete data from the database. Come to talk to me and we'll work through it before you do something you can't undo. 
 
 ### Streamlit App
 To run the program and visualize the results, use the command `poetry run python -m streamlit app.py`. This will create a local version of the web app this program makes that includes the data overview and statistical analysis. 
@@ -21,6 +25,8 @@ To run the program and visualize the results, use the command `poetry run python
 ## Database Schema
 
 The database is organized into three main tables, projects, subjects, and samples. There are two tables that contain the relations between projects and subjects and subjects and samples respectively. 
+
+There is also a view that combines all of these tables into something that essentially replicates the initial CSV file. This ensures the data is easy to use and we don't need to write joins all of the time.
 
 The idea behind this design is to follow table normalization rules to ensure as little information is repeated as possible. All subject level information is stored in the subjects table and all sample level information is stored in the samples table. This minimizes space requirements and scales well with this type of relational database.
 
@@ -35,4 +41,8 @@ Additionally, `app.py` is responsible for creating the streamlit app.
 This structure seperates code that doesn't interact with each other and allows me to simply import things into `app.py` to maximize its legibility. 
 
 I've also included a folder of the files I used to explore the problem. They are in python files that function as notebooks using the `% ##` notation. I've included them to show a halfway done state and in case I need to revisit the analysis at a later date in a more freeform format. 
+
+## Link
+[Link to deployed app](https://teikotechnicalstp-j6dwrpw8mupb4mnnwfvijm.streamlit.app/).
+
 

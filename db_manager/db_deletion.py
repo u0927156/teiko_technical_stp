@@ -1,3 +1,5 @@
+"""Functions for deleting information from database."""
+
 import sqlite3
 
 import pandas as pd

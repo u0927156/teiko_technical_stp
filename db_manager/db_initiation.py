@@ -1,3 +1,5 @@
+"""Code for initiating database."""
+
 import sqlite3
 
 

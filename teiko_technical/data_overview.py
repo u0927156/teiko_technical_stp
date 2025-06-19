@@ -4,6 +4,20 @@ from streamlit.connections import SQLConnection
 
 
 def fetch_data_overview(conn: SQLConnection):
+    """
+    Gets the data overview table.
+
+    Parameters
+    ----------
+    conn : SQLConnection
+        Connection to the database
+
+    Returns
+    -------
+    pd.DataFrame
+        A table where each row is a unique sample-cell type combination and the proportion of cells
+        that cell type represents in the sample.
+    """
 
     df = conn.query(
         """

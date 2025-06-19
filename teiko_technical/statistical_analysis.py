@@ -9,10 +9,26 @@ from scipy import stats
 from streamlit.connections import SQLConnection
 
 
-def make_comparison_figure(df, color="response"):
+def make_comparison_figure(df, color="response") -> go.Figure:
+    """Make a comparison box plot of cell type percentage.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        The dataframe containing the data used to build the figure.
+    color : str, optional
+        What to divide up by color, by default "response"
+
+    Returns
+    -------
+    go.Figure
+        A box plot figure. Significant differences as measured by a Bonferroni-corrected KS test
+        are included in the plot.
+    """
     fig = go.Figure()
     fig = px.box(df, x="population", y="percentage", color=color)
 
+    # Report significant differences in the plot
     for pop in df["population"].unique():
         pop_df = df.query(f"population == '{pop}'")
         stats_results = stats.mannwhitneyu(
@@ -37,6 +53,20 @@ def make_comparison_figure(df, color="response"):
 def get_box_plot_and_df(
     conn: SQLConnection, data_overview_df: pd.DataFrame
 ) -> Tuple[go.Figure, pd.DataFrame]:
+    """Get the miraclib treatment box plot.
+
+    Parameters
+    ----------
+    conn : SQLConnection
+        A connection to the database.
+    data_overview_df : pd.DataFrame
+        The data overview.
+
+    Returns
+    -------
+    Tuple[go.Figure, pd.DataFrame]
+        The figure and the data results.
+    """
 
     patient_sample_df = conn.query(
         """
@@ -68,8 +98,24 @@ def get_box_plot_and_df(
 
 
 def get_subset_box_plot_and_additional_info_dfs(
-    comparison_df, t=0
+    comparison_df: pd.DataFrame, t=0
 ) -> Tuple[go.Figure, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Get a box plot figure for the subset of dataframes at t=0 and
+    additional information about the project, sex, and responder status for the subset.
+
+    Parameters
+    ----------
+    comparison_df : pd.DataFrame
+        The comparison dataframe.
+    t : int, optional
+        The time to examine, by default 0
+
+    Returns
+    -------
+    Tuple[go.Figure, pd.DataFrame, pd.DataFrame, pd.DataFrame]
+        The figure, samples from each project, the responders, and the subject sex count
+        data frames.
+    """
     samples_df = comparison_df.query(f"time_from_treatment_start == {t}")
 
     fig = make_comparison_figure(samples_df)

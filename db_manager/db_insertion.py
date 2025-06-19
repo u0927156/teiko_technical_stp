@@ -1,3 +1,5 @@
+"""Functions for inserting into database."""
+
 import sqlite3
 
 import pandas as pd

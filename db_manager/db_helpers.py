@@ -1,3 +1,5 @@
+"""Helper functions for executing and commiting statements."""
+
 import sqlite3
 
 
