@@ -1,33 +1,25 @@
-# %%
-# Imports
 import pandas as pd
-
-# %%
-# Load data + take a look
-df = pd.read_csv("cell-count.csv")
-df.head()
-
-# %%
-print(len(df))
-print(df.project.nunique())
-print(df.subject.nunique())
-print(df["sample"].nunique())
-
-# %%
-# Check if any subjects are present across projects
-num_unique_projects = df.groupby("subject")["project"].nunique()
-num_unique_projects[num_unique_projects > 1]
-# No subjects are in multiple projects. But for futures sake I'm going to make seperate tables and a relation
-# table to join them on.
-
-# %%
-# Start db experimentation
 import sqlite3
+import pathlib
+import sys
 
-conn = sqlite3.connect(":memory:")
+df = pd.read_csv("cell-count.csv")
 
+dest_path = pathlib.Path("cell_count.db")
+if dest_path.exists():
+    are_you_sure = input("Database already exists, do you want to delete (Y)? ")
+
+    if are_you_sure == "Y":
+        dest_path.unlink()
+    else:
+        print("Exiting program.")
+        sys.exit()
+
+
+conn = sqlite3.connect("cell_count.db")
+
+print("Creating Tables")
 c = conn.cursor()
-
 c.execute(
     """
     CREATE TABLE projects(
@@ -114,6 +106,12 @@ def _execute_and_commit_sql(conn: sqlite3.Connection, sql_str: str, params):
     conn.commit()
 
 
+def _executemany_and_commit_sql(conn: sqlite3.Connection, sql_str: str, list_of_params):
+    cursor = conn.cursor()
+    cursor.executemany(sql_str, list_of_params)
+    conn.commit()
+
+
 def insert_project(conn: sqlite3.Connection, project_id: str):
     _execute_and_commit_sql(
         conn, "INSERT INTO projects VALUES(:id)", {"id": project_id}
@@ -132,12 +130,12 @@ def insert_subject(conn: sqlite3.Connection, subject_info):
         response
         )
         VALUES (
-            :subject_id,
-            :condition,
-            :age,
-            :sex,
-            :treatment,
-            :response
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?
         )
         """,
         {
@@ -154,13 +152,13 @@ def insert_subject(conn: sqlite3.Connection, subject_info):
 def insert_subject_project_relation(conn: sqlite3.Connection, relation):
     _execute_and_commit_sql(
         conn,
-        "INSERT INTO project_subject_relation (project_id, subject_id) VALUES (:project_id, :subject_id);",
+        "INSERT INTO project_subject_relation (project_id, subject_id) VALUES (?, ?);",
         {"project_id": relation["project"], "subject_id": relation["subject"]},
     )
 
 
 def insert_sample(conn: sqlite3.Connection, sample_info):
-    _execute_and_commit_sql(
+    _executemany_and_commit_sql(
         conn,
         """
         INSERT INTO samples (
@@ -174,14 +172,14 @@ def insert_sample(conn: sqlite3.Connection, sample_info):
             monocyte
         )
         VALUES(
-            :sample_id,
-            :sample_type,
-            :time_from_treatment_start,
-            :b_cell,
-            :cd8_t_cell,
-            :cd4_t_cell,
-            :nk_cell,
-            :monocyte
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?
         )
         """,
         {
@@ -200,36 +198,44 @@ def insert_sample(conn: sqlite3.Connection, sample_info):
 def insert_subject_sample_relation(conn: sqlite3.Connection, relation):
     _execute_and_commit_sql(
         conn,
-        "INSERT INTO subject_sample_relation (sample_id, subject_id) VALUES (:sample_id, :subject_id);",
+        "INSERT INTO subject_sample_relation (sample_id, subject_id) VALUES (?, ?);",
         {"sample_id": relation["sample"], "subject_id": relation["subject"]},
     )
 
 
+def insert_values(conn: sqlite3.Connection, columns_to_filter: list, sql_str: str):
+    vals_to_insert = df[columns_to_filter].drop_duplicates()
+
+    data_to_insert = list(vals_to_insert.itertuples(index=False, name=None))
+
+    _executemany_and_commit_sql(conn, sql_str=sql_str, list_of_params=data_to_insert)
+
+
+print("Inserting Projects")
 for proj in df["project"].unique():
     insert_project(conn, proj)
 
 
-def insert_values(
-    conn: sqlite3.Connection, insertion_func: callable, columns_to_filter: list
-):
-    for i, row in df[columns_to_filter].drop_duplicates().iterrows():
-        insertion_func(conn, row)
-
-
+print("Inserting Subjects")
 insert_values(
     conn,
-    insert_subject,
     ["subject", "condition", "age", "sex", "treatment", "response"],
-)
-insert_values(
-    conn,
-    insert_subject_project_relation,
-    ["project", "subject"],
+    """INSERT INTO subjects 
+        (subject_id,condition,age,sex,treatment,response)
+    VALUES (?,?,?,?,?,?)
+    """,
 )
 
+print("Inserting Project-Subject Relations")
 insert_values(
     conn,
-    insert_sample,
+    ["project", "subject"],
+    "INSERT INTO project_subject_relation (project_id, subject_id) VALUES (?, ?);",
+)
+
+print("Inserting Samples")
+insert_values(
+    conn,
     [
         "sample",
         "sample_type",
@@ -240,25 +246,17 @@ insert_values(
         "nk_cell",
         "monocyte",
     ],
+    """
+        INSERT INTO samples (sample_id,sample_type,time_from_treatment_start,b_cell,
+            cd8_t_cell,cd4_t_cell,nk_cell,monocyte
+        )
+        VALUES(?,?,?,?,?,?,?,?)
+        """,
 )
+
+print("Inserting Subject-Sample Relations")
 insert_values(
     conn,
-    insert_subject_sample_relation,
     ["subject", "sample"],
+    "INSERT INTO subject_sample_relation (sample_id, subject_id) VALUES (?, ?);",
 )
-
-# for i, row in df[["subject", "condition", "age", "sex", "treatment", "response"]].drop_duplicates().iterrows():
-#     insert_subject(conn, subject_info=row)
-
-# for i, row in (
-#     df[["subject", "condition", "age", "sex", "treatment", "response"]]
-#     .drop_duplicates()
-#     .iterrows()
-# ):
-#     insert_subject(conn, subject_info=row)
-
-
-c.execute("SELECT * FROM project_patient_sample_view")
-
-c.fetchall()
-# %%
