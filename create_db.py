@@ -16,7 +16,7 @@ if dest_path.exists():
         sys.exit()
 
 
-conn = sqlite3.connect("cell_count.db")
+conn = sqlite3.connect(dest_path)
 
 print("Creating Tables")
 c = conn.cursor()
@@ -91,10 +91,10 @@ c.execute(
         sa.monocyte
     FROM 
         projects p 
-    JOIN project_subject_relation psr ON p.project_id = psr.project_id
-    JOIN subjects s ON s.subject_id = psr.subject_id
-    JOIN subject_sample_relation ssr ON s.subject_id = s.subject_id
-    JOIN samples sa ON ssr.sample_id = sa.sample_id
+    INNER JOIN project_subject_relation psr ON p.project_id = psr.project_id
+    INNER JOIN subjects s ON s.subject_id = psr.subject_id
+    INNER JOIN subject_sample_relation ssr ON ssr.subject_id = s.subject_id
+    INNER JOIN samples sa ON ssr.sample_id = sa.sample_id
     """
 )
 conn.commit()
@@ -118,95 +118,11 @@ def insert_project(conn: sqlite3.Connection, project_id: str):
     )
 
 
-def insert_subject(conn: sqlite3.Connection, subject_info):
-    _execute_and_commit_sql(
-        conn,
-        """INSERT INTO subjects 
-        (subject_id,
-        condition,
-        age,
-        sex,
-        treatment,
-        response
-        )
-        VALUES (
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?
-        )
-        """,
-        {
-            "subject_id": subject_info["subject"],
-            "age": subject_info["age"],
-            "sex": subject_info["sex"],
-            "treatment": subject_info["treatment"],
-            "response": subject_info["response"],
-            "condition": subject_info["condition"],
-        },
-    )
-
-
-def insert_subject_project_relation(conn: sqlite3.Connection, relation):
-    _execute_and_commit_sql(
-        conn,
-        "INSERT INTO project_subject_relation (project_id, subject_id) VALUES (?, ?);",
-        {"project_id": relation["project"], "subject_id": relation["subject"]},
-    )
-
-
-def insert_sample(conn: sqlite3.Connection, sample_info):
-    _executemany_and_commit_sql(
-        conn,
-        """
-        INSERT INTO samples (
-            sample_id,
-            sample_type,
-            time_from_treatment_start,
-            b_cell,
-            cd8_t_cell,
-            cd4_t_cell,
-            nk_cell,
-            monocyte
-        )
-        VALUES(
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?,
-            ?
-        )
-        """,
-        {
-            "sample_id": sample_info["sample"],
-            "sample_type": sample_info["sample_type"],
-            "time_from_treatment_start": sample_info["time_from_treatment_start"],
-            "b_cell": sample_info["b_cell"],
-            "cd8_t_cell": sample_info["cd8_t_cell"],
-            "cd4_t_cell": sample_info["cd4_t_cell"],
-            "nk_cell": sample_info["nk_cell"],
-            "monocyte": sample_info["monocyte"],
-        },
-    )
-
-
-def insert_subject_sample_relation(conn: sqlite3.Connection, relation):
-    _execute_and_commit_sql(
-        conn,
-        "INSERT INTO subject_sample_relation (sample_id, subject_id) VALUES (?, ?);",
-        {"sample_id": relation["sample"], "subject_id": relation["subject"]},
-    )
-
-
 def insert_values(conn: sqlite3.Connection, columns_to_filter: list, sql_str: str):
     vals_to_insert = df[columns_to_filter].drop_duplicates()
 
     data_to_insert = list(vals_to_insert.itertuples(index=False, name=None))
+    print(f"Inserting {len(data_to_insert)} rows.")
 
     _executemany_and_commit_sql(conn, sql_str=sql_str, list_of_params=data_to_insert)
 
@@ -257,6 +173,6 @@ insert_values(
 print("Inserting Subject-Sample Relations")
 insert_values(
     conn,
-    ["subject", "sample"],
+    ["sample", "subject"],
     "INSERT INTO subject_sample_relation (sample_id, subject_id) VALUES (?, ?);",
 )

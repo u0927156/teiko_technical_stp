@@ -261,4 +261,3 @@ insert_values(
 c.execute("SELECT * FROM project_patient_sample_view")
 
 c.fetchall()
-# %%
